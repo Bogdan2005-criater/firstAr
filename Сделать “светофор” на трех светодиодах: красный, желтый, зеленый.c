@@ -6,73 +6,84 @@
 //-Добавить кнопку перехода пешехода в светофор
 
 
-const int greenLed = 9;
-const int yellowLed = 10;
-const int redLed = 11;
-const int buttonPin = 2;
+int greenLED = 9;
+int yellowLED = 10;
+int redLED = 11;
+int buttonPin = 2;
 
-bool pedestrianPressed = false;
-unsigned long previousMillis = 0;
-const long interval = 1000; 
+bool pedestrianRequest = false; 
+unsigned long lastButtonPress = 0;
+const unsigned long delayTime = 5000; 
 
 void setup() {
-  pinMode(greenLed, OUTPUT);
-  pinMode(yellowLed, OUTPUT);
-  pinMode(redLed, OUTPUT);
-  pinMode(buttonPin, INPUT_PULLUP);  
-
-  digitalWrite(redLed, HIGH);
-  digitalWrite(greenLed, LOW);
-  digitalWrite(yellowLed, LOW);
+  pinMode(greenLED, OUTPUT);
+  pinMode(yellowLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP); 
+  
+  digitalWrite(greenLED, HIGH);
+  digitalWrite(yellowLED, LOW);
+  digitalWrite(redLED, LOW);
 }
 
 void loop() {
-  if (digitalRead(buttonPin) == LOW) {
-    pedestrianPressed = true;
+  if (digitalRead(buttonPin) == LOW && millis() - lastButtonPress > delayTime) {
+    pedestrianRequest = true;
+    lastButtonPress = millis(); 
   }
-
-  if (pedestrianPressed) {
-    changeToGreen();           
-    blinkGreen(3);            
-    changeToYellow();  
-    delay(5000); 
-    changeToRed();           
-    delay(5000);               
-    pedestrianPressed = false; 
+  
+  if (pedestrianRequest) {
+    pedestrianLightCycle(); 
+    pedestrianRequest = false; 
   } else {
-    changeToGreen();
-    delay(5000);              
-    blinkGreen(3);             
-    changeToYellow();
-    delay(5000);
-    changeToRed();
-    delay(8000);              
+    normalLightCycle(); 
   }
 }
 
-void changeToGreen() {
-  digitalWrite(greenLed, HIGH);
-  digitalWrite(yellowLed, LOW);
-  digitalWrite(redLed, LOW);
-}
-
-void blinkGreen(int times) {
-  for (int i = 0; i < times; i++) {
-    digitalWrite(greenLed, LOW);
-    delay(500);              
-    digitalWrite(greenLed, HIGH);
+void normalLightCycle() {
+  digitalWrite(greenLED, HIGH);
+  delay(5000);
+  
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(greenLED, LOW);
+    delay(500);
+    digitalWrite(greenLED, HIGH);
     delay(500);
   }
+  digitalWrite(greenLED, LOW);
+  
+  digitalWrite(yellowLED, HIGH);
+  delay(2000);
+  digitalWrite(yellowLED, LOW);
+  
+  digitalWrite(redLED, HIGH);
+  delay(5000);
+  digitalWrite(redLED, LOW);
 }
 
-void changeToYellow() {
-  digitalWrite(greenLed, LOW);
-  digitalWrite(yellowLed, HIGH);
-  digitalWrite(redLed, LOW);
+void pedestrianLightCycle() {
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(yellowLED, HIGH);
+    delay(500);
+    digitalWrite(yellowLED, LOW);
+    delay(500);
+  }
+  
+  digitalWrite(redLED, HIGH);
+  delay(5000);
+  digitalWrite(redLED, LOW);
+  
 }
 
-void changeToRed() {
-  digitalWrite(greenLed, LOW);
-  digitalWrite(yellowLed, LOW);
-  digitalWrite(redLed, HIGH);
+void controlLEDFromSerial() {
+  if (Serial.available() > 0) {
+    char command = Serial.read();
+    
+    if (command == '1') {
+      digitalWrite(greenLED, HIGH);  
+    } else if (command == '0') {
+      digitalWrite(greenLED, LOW);  
+    }
+  }
 }
+
